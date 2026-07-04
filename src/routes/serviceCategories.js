@@ -11,17 +11,47 @@ const upload = multer({
 
 router.get("/", async (req, res, next) => {
   try {
-    const filter = req.query.status ? { status: req.query.status } : {};
-    const categories = await ServiceCategory.find(filter).sort({ createdAt: -1 });
+    const filter = {};
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
+    if (req.query.branchId) {
+      filter.branchId = req.query.branchId;
+    }
+
+    let categories = await ServiceCategory.find(filter).sort({ createdAt: -1 });
+
+    // Fallback to global categories if none are configured for this branch
+    if (req.query.branchId && categories.length === 0) {
+      const fallbackFilter = req.query.status ? { status: req.query.status } : {};
+      categories = await ServiceCategory.find({
+        ...fallbackFilter,
+        $or: [{ branchId: { $exists: false } }, { branchId: null }]
+      }).sort({ createdAt: -1 });
+    }
+
     res.json(categories);
   } catch (error) {
     next(error);
   }
 });
 
-router.get("/active", async (_req, res, next) => {
+router.get("/active", async (req, res, next) => {
   try {
-    const categories = await ServiceCategory.find({ status: "Active" }).sort({ name: 1 });
+    const filter = { status: "Active" };
+    if (req.query.branchId) {
+      filter.branchId = req.query.branchId;
+    }
+    let categories = await ServiceCategory.find(filter).sort({ name: 1 });
+
+    // Fallback to global active categories
+    if (req.query.branchId && categories.length === 0) {
+      categories = await ServiceCategory.find({
+        status: "Active",
+        $or: [{ branchId: { $exists: false } }, { branchId: null }]
+      }).sort({ name: 1 });
+    }
+
     res.json(categories);
   } catch (error) {
     next(error);
@@ -30,7 +60,7 @@ router.get("/active", async (_req, res, next) => {
 
 router.post("/", upload.single("image"), async (req, res, next) => {
   try {
-    const { name, status = "Active" } = req.body;
+    const { name, status = "Active", branchId } = req.body;
 
     if (!name || !req.file) {
       return res.status(400).json({ message: "Name and image are required" });
@@ -46,7 +76,8 @@ router.post("/", upload.single("image"), async (req, res, next) => {
       name,
       status,
       imageUrl: uploaded.url,
-      imageFileId: uploaded.fileId
+      imageFileId: uploaded.fileId,
+      branchId: branchId || undefined
     });
 
     res.status(201).json(category);
@@ -110,7 +141,7 @@ router.delete("/:id/subcategories/:subId", async (req, res, next) => {
 
 router.put("/:id", upload.single("image"), async (req, res, next) => {
   try {
-    const { name, status } = req.body;
+    const { name, status, branchId } = req.body;
     const category = await ServiceCategory.findById(req.params.id);
     if (!category) {
       return res.status(404).json({ message: "Category not found" });
@@ -118,6 +149,9 @@ router.put("/:id", upload.single("image"), async (req, res, next) => {
 
     if (name) category.name = name;
     if (status) category.status = status;
+    if (branchId !== undefined) {
+      category.branchId = branchId || undefined;
+    }
 
     if (req.file) {
       const uploaded = await imagekit.upload({

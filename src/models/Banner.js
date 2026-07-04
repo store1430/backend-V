@@ -6,6 +6,7 @@ const bannerSchema = new mongoose.Schema(
     imageUrl: { type: String, required: true },
     imageFileId: { type: String, required: true },
     order: { type: Number, default: 0 },
+    branchId: { type: mongoose.Schema.Types.ObjectId, ref: "Branch", index: true },
     status: { type: String, enum: ["Active", "Inactive"], default: "Active", index: true }
   },
   { timestamps: true, collection: "banners" }

@@ -20,6 +20,11 @@ const serviceCategorySchema = new mongoose.Schema(
     imageFileId: {
       type: String
     },
+    branchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      index: true
+    },
     subCategories: [
       {
         name: { type: String, required: true, trim: true },
