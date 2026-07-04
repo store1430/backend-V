@@ -11,7 +11,11 @@ export async function connectDB() {
     .map((server) => server.trim())
     .filter(Boolean);
 
-  dns.setServers(dnsServers);
+  try {
+    dns.setServers(dnsServers);
+  } catch (dnsErr) {
+    console.warn("Failed to set custom DNS servers, using default resolver:", dnsErr.message);
+  }
 
   await mongoose.connect(process.env.MONGODB_URI);
   console.log("MongoDB connected");
