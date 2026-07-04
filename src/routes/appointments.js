@@ -14,8 +14,14 @@ function addIdFilter(filter, key, value) {
   }
 }
 
+function hasInvalidIdQuery(req, keys) {
+  return keys.some((key) => req.query[key] && !validObjectId(req.query[key]));
+}
+
 router.get("/today", async (req, res, next) => {
   try {
+    if (hasInvalidIdQuery(req, ["doctorId", "branchId"])) return res.json([]);
+
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
@@ -38,6 +44,8 @@ router.get("/today", async (req, res, next) => {
 
 router.get("/upcoming-video", async (req, res, next) => {
   try {
+    if (hasInvalidIdQuery(req, ["userId"])) return res.json([]);
+
     const filter = {
       appointmentDate: { $gte: new Date() },
       appointmentType: "Video",
@@ -97,6 +105,8 @@ router.post("/", async (req, res, next) => {
 
 router.get("/", async (req, res, next) => {
   try {
+    if (hasInvalidIdQuery(req, ["userId", "branchId"])) return res.json([]);
+
     const filter = {};
     addIdFilter(filter, "userId", req.query.userId);
     addIdFilter(filter, "branchId", req.query.branchId);

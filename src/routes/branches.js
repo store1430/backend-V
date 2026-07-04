@@ -9,11 +9,17 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
+function publicBranch(branch) {
+  const data = branch.toObject ? branch.toObject() : { ...branch };
+  delete data.password;
+  return data;
+}
+
 // GET all branches
 router.get("/", async (req, res, next) => {
   try {
     const branches = await Branch.find().sort({ name: 1 });
-    res.json(branches);
+    res.json(branches.map(publicBranch));
   } catch (error) {
     next(error);
   }
@@ -30,7 +36,7 @@ router.post("/login", async (req, res, next) => {
     if (!branch || branch.password !== password) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    res.json({ success: true, branch });
+    res.json({ success: true, branch: publicBranch(branch) });
   } catch (error) {
     next(error);
   }
@@ -78,7 +84,7 @@ router.post("/", upload.single("image"), async (req, res, next) => {
     });
 
     await branch.save();
-    res.status(201).json(branch);
+    res.status(201).json(publicBranch(branch));
   } catch (error) {
     next(error);
   }
@@ -134,7 +140,7 @@ router.put("/:id", upload.single("image"), async (req, res, next) => {
     }
 
     await branch.save();
-    res.json(branch);
+    res.json(publicBranch(branch));
   } catch (error) {
     next(error);
   }
