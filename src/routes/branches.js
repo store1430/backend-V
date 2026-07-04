@@ -22,7 +22,7 @@ router.get("/", async (req, res, next) => {
 // POST create branch
 router.post("/", upload.single("image"), async (req, res, next) => {
   try {
-    const { name, city, address, phone, country = "India", isActive = true } = req.body;
+    const { name, city, address, phone, state = "Telangana", isActive = true } = req.body;
     if (!name || !city) {
       return res.status(400).json({ message: "Name and city are required" });
     }
@@ -47,7 +47,7 @@ router.post("/", upload.single("image"), async (req, res, next) => {
       phone,
       imageUrl,
       imageFileId,
-      country,
+      state,
       isActive: isActive === "true" || isActive === true
     });
 
@@ -61,7 +61,7 @@ router.post("/", upload.single("image"), async (req, res, next) => {
 // PUT update branch
 router.put("/:id", upload.single("image"), async (req, res, next) => {
   try {
-    const { name, city, address, phone, country, isActive } = req.body;
+    const { name, city, address, phone, state, isActive } = req.body;
     const branch = await Branch.findById(req.params.id);
     if (!branch) {
       return res.status(404).json({ message: "Branch not found" });
@@ -71,7 +71,7 @@ router.put("/:id", upload.single("image"), async (req, res, next) => {
     if (city) branch.city = city;
     if (address !== undefined) branch.address = address;
     if (phone !== undefined) branch.phone = phone;
-    if (country) branch.country = country;
+    if (state) branch.state = state;
     
     if (isActive !== undefined) {
       branch.isActive = isActive === "true" || isActive === true;
