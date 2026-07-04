@@ -105,10 +105,11 @@ router.post("/", async (req, res, next) => {
 
 router.get("/", async (req, res, next) => {
   try {
-    if (hasInvalidIdQuery(req, ["userId", "branchId"])) return res.json([]);
+    if (hasInvalidIdQuery(req, ["userId", "doctorId", "branchId"])) return res.json([]);
 
     const filter = {};
     addIdFilter(filter, "userId", req.query.userId);
+    addIdFilter(filter, "doctorId", req.query.doctorId);
     addIdFilter(filter, "branchId", req.query.branchId);
     const appointments = await Appointment.find(filter).sort({ appointmentDate: -1 });
     res.json(appointments);
