@@ -1,6 +1,14 @@
+import { Appointment } from "../models/Appointment.js";
+
 export function attachSignaling(io) {
   io.on("connection", (socket) => {
-    socket.on("join-room", ({ roomId, role }) => {
+    socket.on("join-user-notifications", ({ userId }) => {
+      if (userId) {
+        socket.join(`user:${userId}`);
+      }
+    });
+
+    socket.on("join-room", async ({ roomId, role }) => {
       const room = io.sockets.adapter.rooms.get(roomId);
       const existingPeerCount = room?.size || 0;
 
@@ -9,6 +17,13 @@ export function attachSignaling(io) {
 
       if (existingPeerCount > 0) {
         socket.emit("peer-joined", { socketId: socket.id, role: "existing-peer" });
+      }
+
+      if (role === "doctor") {
+        const appointment = await Appointment.findOne({ roomId }).lean().catch(() => null);
+        if (appointment?.userId) {
+          io.to(`user:${appointment.userId}`).emit("incoming-call", { appointment });
+        }
       }
     });
 
