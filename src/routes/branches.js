@@ -19,12 +19,36 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+// POST login branch
+router.post("/login", async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ message: "Username and password are required" });
+    }
+    const branch = await Branch.findOne({ username: username.trim() });
+    if (!branch || branch.password !== password) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+    res.json({ success: true, branch });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // POST create branch
 router.post("/", upload.single("image"), async (req, res, next) => {
   try {
-    const { name, city, address, phone, state = "Telangana", isActive = true } = req.body;
+    const { name, city, address, phone, state = "Telangana", username, password, isActive = true } = req.body;
     if (!name || !city) {
       return res.status(400).json({ message: "Name and city are required" });
+    }
+
+    if (username) {
+      const existing = await Branch.findOne({ username: username.trim() });
+      if (existing) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
     }
 
     let imageUrl = "";
@@ -48,6 +72,8 @@ router.post("/", upload.single("image"), async (req, res, next) => {
       imageUrl,
       imageFileId,
       state,
+      username: username ? username.trim() : undefined,
+      password: password || undefined,
       isActive: isActive === "true" || isActive === true
     });
 
@@ -61,10 +87,18 @@ router.post("/", upload.single("image"), async (req, res, next) => {
 // PUT update branch
 router.put("/:id", upload.single("image"), async (req, res, next) => {
   try {
-    const { name, city, address, phone, state, isActive } = req.body;
+    const { name, city, address, phone, state, username, password, isActive } = req.body;
     const branch = await Branch.findById(req.params.id);
     if (!branch) {
       return res.status(404).json({ message: "Branch not found" });
+    }
+
+    if (username && username.trim() !== branch.username) {
+      const existing = await Branch.findOne({ username: username.trim() });
+      if (existing) {
+        return res.status(400).json({ message: "Username already taken by another branch" });
+      }
+      branch.username = username.trim();
     }
 
     if (name) branch.name = name;
@@ -72,6 +106,7 @@ router.put("/:id", upload.single("image"), async (req, res, next) => {
     if (address !== undefined) branch.address = address;
     if (phone !== undefined) branch.phone = phone;
     if (state) branch.state = state;
+    if (password) branch.password = password;
     
     if (isActive !== undefined) {
       branch.isActive = isActive === "true" || isActive === true;

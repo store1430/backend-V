@@ -9,6 +9,8 @@ const branchSchema = new mongoose.Schema(
     imageUrl: { type: String, trim: true },
     imageFileId: { type: String, trim: true },
     state: { type: String, default: "Telangana", trim: true },
+    username: { type: String, trim: true, index: true },
+    password: { type: String },
     isActive: { type: Boolean, default: true, index: true }
   },
   { timestamps: true, collection: "branches" }
