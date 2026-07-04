@@ -11,13 +11,19 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
+function publicDoctor(doctor) {
+  const data = doctor.toObject ? doctor.toObject() : { ...doctor };
+  delete data.password;
+  return data;
+}
+
 router.get("/", async (req, res, next) => {
   try {
     const filter = {};
     if (req.query.status) filter.status = req.query.status;
     if (req.query.branchId) filter.branchId = req.query.branchId;
     const doctors = await Doctor.find(filter).sort({ createdAt: -1 });
-    res.json(doctors);
+    res.json(doctors.map(publicDoctor));
   } catch (error) {
     next(error);
   }
@@ -117,7 +123,7 @@ router.post("/", upload.single("image"), async (req, res, next) => {
       branchId: branchId || undefined
     });
 
-    res.status(201).json(doctor);
+    res.status(201).json(publicDoctor(doctor));
   } catch (error) {
     next(error);
   }
@@ -208,7 +214,7 @@ router.put("/:id", upload.single("image"), async (req, res, next) => {
     }
 
     await doctor.save();
-    res.json(doctor);
+    res.json(publicDoctor(doctor));
   } catch (error) {
     next(error);
   }
@@ -258,7 +264,7 @@ router.post("/login", async (req, res, next) => {
     }
 
     const token = jwt.sign(
-      { id: doctor._id, name: doctor.name, specialty: doctor.specialty },
+      { id: doctor._id, name: doctor.name, specialty: doctor.specialty, branchId: doctor.branchId },
       process.env.JWT_SECRET || "maruthi_pet_clinic_secret_key",
       { expiresIn: "30d" }
     );
@@ -269,7 +275,8 @@ router.post("/login", async (req, res, next) => {
         _id: doctor._id,
         name: doctor.name,
         specialty: doctor.specialty,
-        imageUrl: doctor.imageUrl
+        imageUrl: doctor.imageUrl,
+        branchId: doctor.branchId
       }
     });
   } catch (error) {
