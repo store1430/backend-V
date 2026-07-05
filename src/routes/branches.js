@@ -118,6 +118,23 @@ router.put("/:id", upload.single("image"), async (req, res, next) => {
       branch.isActive = isActive === "true" || isActive === true;
     }
 
+    if (req.body.videoCallPrice !== undefined) {
+      branch.videoCallPrice = Number(req.body.videoCallPrice);
+    }
+
+    if (req.body.availableDates !== undefined) {
+      try {
+        const dates = typeof req.body.availableDates === "string"
+          ? JSON.parse(req.body.availableDates)
+          : req.body.availableDates;
+        if (Array.isArray(dates)) {
+          branch.availableDates = dates;
+        }
+      } catch (err) {
+        console.warn("Failed to parse availableDates:", err);
+      }
+    }
+
     if (req.file) {
       // Upload new image
       const uploaded = await imagekit.upload({

@@ -25,6 +25,10 @@ const serviceCategorySchema = new mongoose.Schema(
       ref: "Branch",
       index: true
     },
+    basePrice: {
+      type: Number,
+      default: 0
+    },
     subCategories: [
       {
         name: { type: String, required: true, trim: true },
@@ -49,7 +53,7 @@ serviceCategorySchema.set("toJSON", {
         ret.basePrice = Math.min(...ret.subCategories.map((s) => s.price));
       }
     } else {
-      ret.basePrice = 0;
+      ret.basePrice = doc.basePrice || 0;
     }
     return ret;
   }

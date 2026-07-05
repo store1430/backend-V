@@ -11,6 +11,7 @@ import doctorRoutes from "./routes/doctors.js";
 import bannerRoutes from "./routes/banners.js";
 import branchRoutes from "./routes/branches.js";
 import staffRoutes from "./routes/staff.js";
+import authRoutes from "./routes/auth.js";
 import { attachSignaling } from "./realtime/signaling.js";
 
 const app = express();
@@ -28,6 +29,7 @@ app.use(cors({ origin: allowedOrigin }));
 app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
+app.use("/api/auth", authRoutes);
 app.use("/api/service-categories", serviceCategoryRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/pet-history", petHistoryRoutes);

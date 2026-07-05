@@ -60,7 +60,7 @@ router.get("/active", async (req, res, next) => {
 
 router.post("/", upload.single("image"), async (req, res, next) => {
   try {
-    const { name, status = "Active", branchId } = req.body;
+    const { name, status = "Active", branchId, basePrice } = req.body;
 
     if (!name || !req.file) {
       return res.status(400).json({ message: "Name and image are required" });
@@ -77,7 +77,8 @@ router.post("/", upload.single("image"), async (req, res, next) => {
       status,
       imageUrl: uploaded.url,
       imageFileId: uploaded.fileId,
-      branchId: branchId || undefined
+      branchId: branchId || undefined,
+      basePrice: basePrice ? Number(basePrice) : undefined
     });
 
     res.status(201).json(category);
@@ -141,7 +142,7 @@ router.delete("/:id/subcategories/:subId", async (req, res, next) => {
 
 router.put("/:id", upload.single("image"), async (req, res, next) => {
   try {
-    const { name, status, branchId } = req.body;
+    const { name, status, branchId, basePrice } = req.body;
     const category = await ServiceCategory.findById(req.params.id);
     if (!category) {
       return res.status(404).json({ message: "Category not found" });
@@ -151,6 +152,9 @@ router.put("/:id", upload.single("image"), async (req, res, next) => {
     if (status) category.status = status;
     if (branchId !== undefined) {
       category.branchId = branchId || undefined;
+    }
+    if (basePrice !== undefined) {
+      category.basePrice = Number(basePrice);
     }
 
     if (req.file) {
